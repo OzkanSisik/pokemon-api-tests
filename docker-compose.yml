@@ -2,11 +2,10 @@ version: "3.9"
 
 services:
   mock-service:
-    image: ozkansisik/mock-pokemon-api:latest
+    image: ozkansisik/mock-pokemon-api:latest  # Mock servis docker hub imajı veya build yapabilirsin
     container_name: mock-pokemon-api
     ports:
       - "3001:3001"
-    # restart: always  # opsiyonel
 
   api-tests:
     build:
@@ -17,4 +16,4 @@ services:
     environment:
       BASE_URL: "http://mock-service:3001/api"
       PYTHONPATH: "/app"
-    # default command pytest tests/ olarak Dockerfile içinde verildiği için buraya yazmaya gerek yok
+    command: pytest tests/
