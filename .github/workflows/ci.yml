@@ -27,20 +27,26 @@ jobs:
       - name: Show BASE_URL environment variable
         run: echo "BASE_URL=$BASE_URL"
 
-      - name: Run services with Docker Compose
-        run: docker compose up --build -d
+      - name: Bring up services
+        run: docker compose up -d --build
+
+      - name: Show Docker networks
+        run: docker network ls
+
+      - name: Inspect default network
+        run: docker network inspect $(docker network ls -q -f name=python_api_pokemon_default)
 
       - name: Wait for services to be ready
         run: sleep 10  # Servislerin ayağa kalkması için bekle
 
+      - name: Check running containers
+        run: docker compose ps
+
       - name: Check mock-service hostname resolution
         run: docker compose run --rm api-tests sh -c 'ping -c 3 mock-service || echo "ping failed"'
 
-      - name: Check hosts file inside api-tests container
-        run: docker compose run --rm api-tests cat /etc/hosts
-
-      - name: Run Pytest inside Docker Compose service
-        run: docker compose run --rm api-tests pytest tests/
+      - name: Run tests inside api-tests container
+        run: docker compose exec api-tests pytest tests/
 
 
 
