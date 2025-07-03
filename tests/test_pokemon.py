@@ -8,8 +8,9 @@ def test_get_pikachu(pokemon_api):
 
 
 def test_get_bulbasaur(pokemon_api):
-    response = pokemon_api.get_pokemon("bulbasaur")
     print("DEBUG: BASE_URL =", os.getenv("BASE_URL"))
+    response = pokemon_api.get_pokemon("bulbasaur")
+
     assert response.status_code == 200
     data = response.json()
     assert data["name"] == "bulbasaur"
