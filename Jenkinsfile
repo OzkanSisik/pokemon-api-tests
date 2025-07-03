@@ -4,7 +4,6 @@ pipeline {
     environment {
         // Define environment variables for the pipeline
         DOCKER_IMAGE_TAG = "${env.BUILD_NUMBER}"
-        WORKSPACE_CLEAN = "${env.WORKSPACE}"
         COMPOSE_PROJECT_NAME = "pokemon-api-tests-${env.BUILD_NUMBER}"
     }
     
@@ -20,10 +19,11 @@ pipeline {
         stage('Checkout') {
             steps {
                 script {
-                    // Clean workspace before checkout
-                    cleanWs()
-                    
                     echo "🔍 Checking out repository..."
+                    
+                    // Clean workspace manually (no plugin needed)
+                    sh 'rm -rf * || true'
+                    
                     checkout([
                         $class: 'GitSCM',
                         branches: [[name: '*/main']],
@@ -47,19 +47,17 @@ pipeline {
         stage('Validate Environment') {
             steps {
                 script {
-                    echo "�� Validating Jenkins environment..."
+                    echo " Validating Jenkins environment..."
                     
-                    // Check if Docker is available
-                    sh 'docker --version'
+                    // Check if we can access Docker socket
+                    sh 'ls -la /var/run/docker.sock || echo "Docker socket not found"'
                     
-                    // Check if Docker Compose is available
-                    sh 'docker-compose --version'
+                    // Try to run Docker commands using the host Docker daemon
+                    sh 'docker --version || echo "Docker CLI not available"'
+                    sh 'docker-compose --version || echo "Docker Compose not available"'
                     
                     // Check available disk space
                     sh 'df -h'
-                    
-                    // Check Docker daemon status
-                    sh 'docker info'
                     
                     echo "✅ Environment validation completed"
                 }
@@ -100,9 +98,6 @@ pipeline {
                         docker-compose -p ${COMPOSE_PROJECT_NAME} exec -T api-tests cat /app/test-results.xml || echo "No test results file found"
                     """
                     
-                    // Publish test results if available
-                    publishTestResults testResultsPattern: '**/test-results.xml', allowEmptyResults: true
-                    
                     echo "✅ Test results collection completed"
                 }
             }
@@ -112,7 +107,7 @@ pipeline {
     post {
         always {
             script {
-                echo "�� Cleaning up Docker resources..."
+                echo " Cleaning up Docker resources..."
                 
                 // Always clean up containers and networks
                 sh """
@@ -126,20 +121,13 @@ pipeline {
         
         success {
             script {
-                echo "�� Pipeline completed successfully!"
-                
-                // Optional: Send success notification
-                // emailext (
-                //     subject: "✅ Build Successful: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                //     body: "Build ${env.BUILD_NUMBER} completed successfully.",
-                //     to: "your-email@example.com"
-                // )
+                echo " Pipeline completed successfully!"
             }
         }
         
         failure {
             script {
-                echo "�� Pipeline failed!"
+                echo " Pipeline failed!"
                 
                 // Capture logs for debugging
                 sh """
@@ -149,19 +137,12 @@ pipeline {
                     echo "=== Container Status ==="
                     docker ps -a || true
                 """
-                
-                // Optional: Send failure notification
-                // emailext (
-                //     subject: "❌ Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                //     body: "Build ${env.BUILD_NUMBER} failed. Check Jenkins for details.",
-                //     to: "your-email@example.com"
-                // )
             }
         }
         
         cleanup {
             script {
-                echo "�� Final cleanup..."
+                echo " Final cleanup..."
                 
                 // Ensure all containers are stopped
                 sh """
