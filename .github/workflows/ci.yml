@@ -27,8 +27,14 @@ jobs:
       - name: Build and start services
         run: docker-compose up --build -d
 
+      - name: List Docker networks
+        run: docker network ls
+
       - name: Wait for services to be ready
         run: sleep 15  # Mock servisin açılması için yeterli süre
+
+      - name: List Docker networks again
+        run: docker network ls
 
       - name: Run tests inside api-tests container
         run: docker-compose run --rm --service-ports api-tests pytest tests/
