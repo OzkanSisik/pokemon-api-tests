@@ -9,6 +9,7 @@ def pokemon_api():
     return PokemonAPI()
 
 
+
 @pytest.fixture(scope='session', autouse=False)
 def wait_mock_service():
     wait_for_service(BASE_URL)

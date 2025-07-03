@@ -27,13 +27,13 @@ jobs:
       - name: Show BASE_URL environment variable
         run: echo "BASE_URL=$BASE_URL"
 
-      - name: Start only mock-service container
-        run: docker-compose up -d mock-service
+      - name: Run services with Docker Compose
+        run: docker-compose up --build -d
 
-      - name: Wait for mock-service ready
+      - name: Wait for services to be ready
         run: sleep 10
 
-      - name: Run tests in api-tests container
+      - name: Run tests
         run: docker-compose run --rm api-tests
 
       - name: Stop and remove containers
