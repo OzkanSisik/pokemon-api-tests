@@ -13,32 +13,28 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Pull Mock API Docker Image
-        run: docker pull ozkansisik/mock-pokemon-api:latest
-
-      - name: Run Mock API Container
+      - name: Install Docker Compose
         run: |
-          docker run -d --name mock-pokemon-api -p 3001:3001 ozkansisik/mock-pokemon-api:latest
-          sleep 5  # Servisin açılması için bekle
+          sudo curl -L "https://github.com/docker/compose/releases/download/v2.21.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
 
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
+      - name: Show Docker Compose version
+        run: docker-compose --version
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+      - name: List running containers
+        run: docker compose ps
 
-      - name: Run Pytest
-        env:
-          BASE_URL: "http://mock-service:3001/api"   # ya da test projenin settings.py'ye göre
-          PYTHONPATH: ${{ github.workspace }}
-        run: pytest tests/
+      - name: Show BASE_URL environment variable
+        run: echo "BASE_URL=$BASE_URL"
 
-      - name: Cleanup Docker Container
-        if: always()
-        run: |
-          docker stop mock-pokemon-api || true
-          docker rm mock-pokemon-api || true
+      - name: Build and start containers with Docker Compose
+        run: docker-compose up --build -d
+
+      - name: Wait for services to be ready
+        run: sleep 10
+
+      - name: Run tests inside the api-tests container
+        run: docker-compose exec api-tests pytest tests/
+
+      - name: Tear down containers
+        run: docker-compose down
