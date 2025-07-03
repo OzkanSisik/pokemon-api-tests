@@ -8,7 +8,6 @@ on:
 jobs:
   build-test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -19,16 +18,27 @@ jobs:
           sudo chmod +x /usr/local/bin/docker-compose
 
       - name: Set up Docker Compose
-        run: docker-compose --version
+        run: docker compose version
 
       - name: Run services with Docker Compose
         run: docker compose up --build -d
 
+      - name: List running containers
+        run: docker compose ps
+
+      - name: Show BASE_URL environment variable
+        run: echo "BASE_URL=$BASE_URL"
+
       - name: Wait for services to be ready
-        run: sleep 10  # (gerektiği kadar bekle, servis ayağa kalkana kadar)
+        run: sleep 15
 
       - name: Run Pytest inside Docker Compose service
         run: docker compose run --rm api-tests pytest tests/
 
+      - name: Show mock-service logs on failure
+        if: failure()
+        run: docker compose logs mock-service
+
       - name: Stop and Remove Containers
         run: docker compose down
+
