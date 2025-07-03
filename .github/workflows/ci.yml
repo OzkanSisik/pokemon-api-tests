@@ -33,9 +33,6 @@ jobs:
       - name: Show Docker networks
         run: docker network ls
 
-      - name: Inspect default network
-        run: docker network inspect $(docker network ls -q -f name=python_api_pokemon_default)
-
       - name: Wait for services to be ready
         run: sleep 10  # Servislerin ayağa kalkması için bekle
 
