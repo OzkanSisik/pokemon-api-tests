@@ -13,4 +13,3 @@ services:
     environment:
       BASE_URL: "http://mock-service:3001/api"
       PYTHONPATH: "/app"
-    command: pytest tests/
