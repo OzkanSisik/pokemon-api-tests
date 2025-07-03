@@ -1,88 +1,109 @@
 pipeline {
-    agent any  // Use any agent instead of docker to avoid Docker-in-Docker issues
+    agent any
     
     environment {
+        // Define environment variables for the pipeline
         DOCKER_IMAGE_TAG = "${env.BUILD_NUMBER}"
-        MOCK_SERVICE_IMAGE = "ozkansisik/mock-pokemon-api:latest"
+        WORKSPACE_CLEAN = "${env.WORKSPACE}"
+        COMPOSE_PROJECT_NAME = "pokemon-api-tests-${env.BUILD_NUMBER}"
+    }
+    
+    options {
+        // Pipeline options for better reliability
+        timeout(time: 10, unit: 'MINUTES')
+        retry(1)
+        timestamps()
+        ansiColor('xterm')
     }
     
     stages {
         stage('Checkout') {
             steps {
-                // Clean workspace first
-                cleanWs()
-                
-                // Checkout the main API project
-                git branch: 'main',
-                    credentialsId: 'bc25183b-cbc9-4ac7-a68c-93808aacb47f',
-                    url: 'git@github.com:OzkanSisik/pokemon-api-tests.git'
+                script {
+                    // Clean workspace before checkout
+                    cleanWs()
+                    
+                    echo "🔍 Checking out repository..."
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: [[name: '*/main']],
+                        doGenerateSubmoduleConfigurations: false,
+                        extensions: [
+                            [$class: 'CleanBeforeCheckout'],
+                            [$class: 'CleanCheckout']
+                        ],
+                        submoduleCfg: [],
+                        userRemoteConfigs: [[
+                            credentialsId: 'github-ssh-key',
+                            url: 'git@github.com:OzkanSisik/pokemon-api-tests.git'
+                        ]]
+                    ])
+                    
+                    echo "✅ Repository checked out successfully"
+                }
             }
         }
         
-        stage('Setup Docker Environment') {
+        stage('Validate Environment') {
             steps {
                 script {
-                    // Ensure Docker is available
+                    echo "�� Validating Jenkins environment..."
+                    
+                    // Check if Docker is available
                     sh 'docker --version'
                     
-                    // Pull the latest mock service image
-                    sh "docker pull ${MOCK_SERVICE_IMAGE}"
+                    // Check if Docker Compose is available
+                    sh 'docker-compose --version'
                     
-                    // Build the test image
-                    sh "docker build -t pokemon-api-tests:${DOCKER_IMAGE_TAG} ."
+                    // Check available disk space
+                    sh 'df -h'
+                    
+                    // Check Docker daemon status
+                    sh 'docker info'
+                    
+                    echo "✅ Environment validation completed"
                 }
             }
         }
         
-        stage('Start Mock Service') {
+        stage('Build and Test') {
             steps {
                 script {
-                    // Start mock service container
-                    sh """
-                        docker run -d \
-                            --name mock-service-${env.BUILD_NUMBER} \
-                            --network test-network-${env.BUILD_NUMBER} \
-                            -p 3001:3001 \
-                            ${MOCK_SERVICE_IMAGE}
-                    """
+                    echo "🚀 Starting Docker Compose build and test..."
                     
-                    // Create network for container communication
-                    sh "docker network create test-network-${env.BUILD_NUMBER} || true"
-                    
-                    // Wait for mock service to be ready
-                    sh """
-                        timeout 60 bash -c 'until curl -f http://localhost:3001/health; do sleep 2; done' || exit 1
-                    """
+                    try {
+                        // Set the project name to avoid conflicts
+                        env.COMPOSE_PROJECT_NAME = "pokemon-api-tests-${env.BUILD_NUMBER}"
+                        
+                        // Build and run the services
+                        sh """
+                            docker-compose -p ${COMPOSE_PROJECT_NAME} up --build --abort-on-container-exit --exit-code-from api-tests
+                        """
+                        
+                        echo "✅ Tests completed successfully"
+                        
+                    } catch (Exception e) {
+                        echo "❌ Tests failed: ${e.getMessage()}"
+                        throw e
+                    }
                 }
             }
         }
         
-        stage('Run Tests') {
+        stage('Collect Test Results') {
             steps {
                 script {
-                    // Run tests in container, connecting to mock service
+                    echo "📊 Collecting test results..."
+                    
+                    // Copy test results from container if they exist
                     sh """
-                        docker run --rm \
-                            --name api-tests-${env.BUILD_NUMBER} \
-                            --network test-network-${env.BUILD_NUMBER} \
-                            -e BASE_URL="http://mock-service-${env.BUILD_NUMBER}:3001/api" \
-                            -e PYTHONPATH="/app" \
-                            pokemon-api-tests:${DOCKER_IMAGE_TAG}
+                        docker-compose -p ${COMPOSE_PROJECT_NAME} exec -T api-tests cat /app/test-results.xml || echo "No test results file found"
                     """
-                }
-            }
-        }
-        
-        stage('Cleanup') {
-            steps {
-                script {
-                    // Clean up containers and network
-                    sh """
-                        docker stop mock-service-${env.BUILD_NUMBER} || true
-                        docker rm mock-service-${env.BUILD_NUMBER} || true
-                        docker network rm test-network-${env.BUILD_NUMBER} || true
-                        docker rmi pokemon-api-tests:${DOCKER_IMAGE_TAG} || true
-                    """
+                    
+                    // Publish test results if available
+                    publishTestResults testResultsPattern: '**/test-results.xml', allowEmptyResults: true
+                    
+                    echo "✅ Test results collection completed"
                 }
             }
         }
@@ -91,12 +112,62 @@ pipeline {
     post {
         always {
             script {
-                // Ensure cleanup happens even if pipeline fails
+                echo "�� Cleaning up Docker resources..."
+                
+                // Always clean up containers and networks
                 sh """
-                    docker stop mock-service-${env.BUILD_NUMBER} || true
-                    docker rm mock-service-${env.BUILD_NUMBER} || true
-                    docker network rm test-network-${env.BUILD_NUMBER} || true
-                    docker rmi pokemon-api-tests:${DOCKER_IMAGE_TAG} || true
+                    docker-compose -p ${COMPOSE_PROJECT_NAME} down --volumes --remove-orphans || true
+                    docker system prune -f || true
+                """
+                
+                echo "✅ Cleanup completed"
+            }
+        }
+        
+        success {
+            script {
+                echo "�� Pipeline completed successfully!"
+                
+                // Optional: Send success notification
+                // emailext (
+                //     subject: "✅ Build Successful: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                //     body: "Build ${env.BUILD_NUMBER} completed successfully.",
+                //     to: "your-email@example.com"
+                // )
+            }
+        }
+        
+        failure {
+            script {
+                echo "�� Pipeline failed!"
+                
+                // Capture logs for debugging
+                sh """
+                    echo "=== Docker Compose Logs ==="
+                    docker-compose -p ${COMPOSE_PROJECT_NAME} logs || true
+                    
+                    echo "=== Container Status ==="
+                    docker ps -a || true
+                """
+                
+                // Optional: Send failure notification
+                // emailext (
+                //     subject: "❌ Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                //     body: "Build ${env.BUILD_NUMBER} failed. Check Jenkins for details.",
+                //     to: "your-email@example.com"
+                // )
+            }
+        }
+        
+        cleanup {
+            script {
+                echo "�� Final cleanup..."
+                
+                // Ensure all containers are stopped
+                sh """
+                    docker-compose -p ${COMPOSE_PROJECT_NAME} down --volumes --remove-orphans || true
+                    docker container prune -f || true
+                    docker network prune -f || true
                 """
             }
         }

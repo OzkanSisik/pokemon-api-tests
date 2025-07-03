@@ -1,19 +1,31 @@
 version: "3.9"
 
 services:
+  # Mock service - your separate project running as a Docker image
   mock-service:
-    image: ozkansisik/mock-pokemon-api:latest  # Mock servis docker hub imajı veya build yapabilirsin
+    image: ozkansisik/mock-pokemon-api:latest
     container_name: mock-pokemon-api
     ports:
       - "3001:3001"
+    networks:
+      - test-network
 
+  # API tests - your Python tests
   api-tests:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: pokemon-api-tests
     depends_on:
       - mock-service
     environment:
-      BASE_URL: "http://mock-service:3001/api"
-      PYTHONPATH: "/app"
-    command: pytest tests/
+      - BASE_URL=http://mock-service:3001/api
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+    networks:
+      - test-network
+
+# Define a custom network for service communication
+networks:
+  test-network:
+    driver: bridge
