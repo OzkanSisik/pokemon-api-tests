@@ -35,10 +35,7 @@ jobs:
       - name: Run Pytest
         env:
           PYTHONPATH: ${{ github.workspace }}
-        run: |
-          echo $PYTHONPATH
-          pytest -v tests/
-      
+        run: pytest tests/
 
       - name: Cleanup Docker Container
         if: always()
