@@ -37,7 +37,8 @@ jobs:
         run: docker network ls
 
       - name: Run tests inside api-tests container
-        run: docker-compose run --rm --service-ports api-tests pytest tests/
+        run: docker-compose run --rm --network pokemon-api-tests_default api-tests pytest tests/
+
 
       - name: Cleanup containers
         if: always()
