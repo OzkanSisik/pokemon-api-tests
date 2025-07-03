@@ -17,8 +17,10 @@ jobs:
 
       - name: Run Mock API Container
         run: |
+          docker rm -f mock-pokemon-api || true
           docker run -d --name mock-pokemon-api -p 3001:3001 ozkansisik/mock-pokemon-api:latest
           sleep 5
+      
 
       - name: Set up Python 3.9
         uses: actions/setup-python@v4
@@ -31,7 +33,12 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Pytest
-        run: pytest tests/
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          echo $PYTHONPATH
+          pytest -v tests/
+      
 
       - name: Cleanup Docker Container
         if: always()
