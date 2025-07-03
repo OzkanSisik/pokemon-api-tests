@@ -5,7 +5,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 git url: 'git@github.com:OzkanSisik/pokemon-api-tests.git',
-                 credentialsId: 'bc25183b-cbc9-4ac7-a68c-93808aacb47f',
+                 credentialsId: '3ce1955f-a763-43ac-b74a-66c82d434b6e',
                  branch: 'main'
             }
         }
