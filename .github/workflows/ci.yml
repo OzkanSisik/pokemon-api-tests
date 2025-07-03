@@ -33,7 +33,7 @@ jobs:
 
       - name: Run Pytest
         env:
-          BASE_URL: "http://localhost:3001/api"   # ya da test projenin settings.py'ye göre
+          BASE_URL: "http://mock-service:3001/api"   # ya da test projenin settings.py'ye göre
           PYTHONPATH: ${{ github.workspace }}
         run: pytest tests/
 
