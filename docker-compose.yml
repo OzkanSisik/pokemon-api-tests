@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  mock-service:
+    image: ozkansisik/mock-pokemon-api:latest
+    container_name: mock-pokemon-api
+    ports:
+      - "3001:3001"
+
+  api-tests:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - mock-service
+    environment:
+      BASE_URL: "http://mock-service:3001/api"
+      PYTHONPATH: "/app"
+    command: pytest tests/
