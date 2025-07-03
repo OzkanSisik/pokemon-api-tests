@@ -31,7 +31,7 @@ jobs:
         run: sleep 15  # Mock servisin açılması için yeterli süre
 
       - name: Run tests inside api-tests container
-        run: docker-compose run --rm api-tests pytest tests/
+        run: docker-compose run --rm --service-ports api-tests pytest tests/
 
       - name: Cleanup containers
         if: always()
