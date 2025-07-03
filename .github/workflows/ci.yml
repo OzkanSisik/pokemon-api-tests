@@ -8,37 +8,37 @@ on:
 jobs:
   build-test:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install docker-compose
+      - name: Pull Mock API Docker Image
+        run: docker pull ozkansisik/mock-pokemon-api:latest
+
+      - name: Run Mock API Container
         run: |
-          sudo curl -L "https://github.com/docker/compose/releases/download/v2.21.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-          sudo chmod +x /usr/local/bin/docker-compose
+          docker run -d --name mock-pokemon-api -p 3001:3001 ozkansisik/mock-pokemon-api:latest
+          sleep 5  # Servisin açılması için bekle
 
-      - name: Set up Docker Compose
-        run: docker compose version
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
 
-      - name: Run services with Docker Compose
-        run: docker compose up --build -d
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-      - name: List running containers
-        run: docker compose ps
+      - name: Run Pytest
+        env:
+          BASE_URL: "http://localhost:3001/api"   # ya da test projenin settings.py'ye göre
+          PYTHONPATH: ${{ github.workspace }}
+        run: pytest tests/
 
-      - name: Show BASE_URL environment variable
-        run: echo "BASE_URL=$BASE_URL"
-
-      - name: Wait for services to be ready
-        run: sleep 15
-
-      - name: Run Pytest inside Docker Compose service
-        run: docker compose run --rm api-tests pytest tests/
-
-      - name: Show mock-service logs on failure
-        if: failure()
-        run: docker compose logs mock-service
-
-      - name: Stop and Remove Containers
-        run: docker compose down
-
+      - name: Cleanup Docker Container
+        if: always()
+        run: |
+          docker stop mock-pokemon-api || true
+          docker rm mock-pokemon-api || true
