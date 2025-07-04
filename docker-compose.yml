@@ -25,6 +25,22 @@ services:
     networks:
       - test-network
 
+ jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /Users/ozkansisik/.docker/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/var/jenkins_home/.ssh:ro
+    environment:
+      - JENKINS_OPTS=--prefix=/jenkins
+    group_add:
+      - docker
+    restart: unless-stopped
+
 # Define a custom network for service communication
 networks:
   test-network:
