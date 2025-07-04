@@ -4,7 +4,9 @@ services:
   # Mock service - your separate project running as a Docker image
   mock-service:
     image: ozkansisik/mock-pokemon-api:latest
-    container_name: mock-pokemon-api
+    # Let Docker Compose assign a unique container name per project to avoid
+    # "already in use" conflicts when a previous pipeline run hasn't fully
+    # cleaned up yet.
     ports:
       - "3001:3001"
     networks:
@@ -15,7 +17,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: pokemon-api-tests
+    # Same here – avoid fixed container name collisions
     depends_on:
       - mock-service
     environment:
