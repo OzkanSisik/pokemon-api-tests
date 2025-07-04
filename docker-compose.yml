@@ -7,8 +7,6 @@ services:
     # Let Docker Compose assign a unique container name per project to avoid
     # "already in use" conflicts when a previous pipeline run hasn't fully
     # cleaned up yet.
-    ports:
-      - "3001:3001"
     networks:
       - test-network
 
