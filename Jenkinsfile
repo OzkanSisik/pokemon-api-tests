@@ -35,15 +35,21 @@ pipeline {
                         submoduleCfg: [],
                         userRemoteConfigs: [[
                             credentialsId: 'github-ssh-key',
-                            url: 'git@github.com:OzkanSisik/pokemon-api-tests.git'
+                    url: 'git@github.com:OzkanSisik/pokemon-api-tests.git'
                         ]]
                     ])
                     
                     echo "✅ Repository checked out successfully"
+            }
+        }
+        stage('Pull Latest Mock Service Image') {
+            steps {
+                script {
+                    echo "📦 Pulling latest mock-service image from Docker Hub..."
+                    sh 'docker pull ozkansisik/mock-pokemon-api:latest'
                 }
             }
         }
-        
         stage('Validate Environment') {
             steps {
                 script {
@@ -150,7 +156,6 @@ pipeline {
                     docker container prune -f || true
                     docker network prune -f || true
                 """
-            }
         }
     }
 }
