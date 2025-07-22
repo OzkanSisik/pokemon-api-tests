@@ -40,8 +40,10 @@ pipeline {
                     ])
                     
                     echo "✅ Repository checked out successfully"
+                }
             }
         }
+        
         stage('Pull Latest Mock Service Image') {
             steps {
                 script {
