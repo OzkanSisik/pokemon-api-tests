@@ -156,6 +156,7 @@ pipeline {
                     docker container prune -f || true
                     docker network prune -f || true
                 """
+            }
         }
     }
 }
