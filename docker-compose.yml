@@ -1,17 +1,15 @@
 version: "3.9"
 
 services:
-  # Mock service - your separate project running as a Docker image
+  # Mock service
   mock-service:
     image: ozkansisik/mock-pokemon-api:latest
-    # No port mapping for Jenkins - only internal network communication
     networks:
       - test-network
 
-  # API tests - your Python tests
+  # API tests
   api-tests:
     image: ozkansisik/pokemon-api-tests:latest
-    # Same here – avoid fixed container name collisions
     depends_on:
       - mock-service
     environment:
@@ -22,7 +20,7 @@ services:
       - test-network
 
 
-# Define a custom network for service communication
+# Custom network for service communication
 networks:
   test-network:
     driver: bridge
