@@ -21,7 +21,6 @@ This project contains automated tests for a Pokemon API. The tests run against a
 
 ### Prerequisites
 - Docker and Docker Compose installed
-- Python 3.11+ (for local development)
 
 ### Running Tests
 
@@ -38,7 +37,6 @@ This will:
 3. Start both containers
 4. Run the test suite
 5. Clean up automatically
-
 
 ## Test Coverage
 
