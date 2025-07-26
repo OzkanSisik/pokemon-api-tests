@@ -44,11 +44,12 @@ pipeline {
         }
         }
         
-        stage('Pull Latest Mock Service Image') {
+        stage('Pull Latest Images') {
             steps {
                 script {
-                    echo "📦 Pulling latest mock-service image from Docker Hub..."
+                    echo "📦 Pulling latest images from Docker Hub..."
                     sh 'docker pull ozkansisik/mock-pokemon-api:latest'
+                    sh 'docker pull ozkansisik/pokemon-api-tests:latest'
                 }
             }
         }
