@@ -40,8 +40,8 @@ pipeline {
                     ])
                     
                     echo "✅ Repository checked out successfully"
-                }
             }
+        }
         }
         
         stage('Pull Latest Mock Service Image') {
@@ -158,7 +158,7 @@ pipeline {
                     docker container prune -f || true
                     docker network prune -f || true
                 """
-            }
         }
     }
+}
 }

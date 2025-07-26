@@ -4,17 +4,13 @@ services:
   # Mock service - your separate project running as a Docker image
   mock-service:
     image: ozkansisik/mock-pokemon-api:latest
-    # Let Docker Compose assign a unique container name per project to avoid
-    # "already in use" conflicts when a previous pipeline run hasn't fully
-    # cleaned up yet.
+    # No port mapping for Jenkins - only internal network communication
     networks:
       - test-network
 
   # API tests - your Python tests
   api-tests:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ozkansisik/pokemon-api-tests:latest
     # Same here – avoid fixed container name collisions
     depends_on:
       - mock-service
