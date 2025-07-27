@@ -8,7 +8,6 @@ pipeline {
     }
     
     options {
-        // Pipeline options for better reliability
         timeout(time: 10, unit: 'MINUTES')
         retry(1)
         timestamps()
@@ -21,7 +20,6 @@ pipeline {
                 script {
                     echo "🔍 Checking out repository..."
                     
-                    // Clean workspace manually (no plugin needed)
                     sh 'rm -rf * || true'
                     
                     checkout([
@@ -53,25 +51,6 @@ pipeline {
                 }
             }
         }
-        stage('Validate Environment') {
-            steps {
-                script {
-                    echo " Validating Jenkins environment..."
-                    
-                    // Check if we can access Docker socket
-                    sh 'ls -la /var/run/docker.sock || echo "Docker socket not found"'
-                    
-                    // Try to run Docker commands using the host Docker daemon
-                    sh 'docker --version || echo "Docker CLI not available"'
-                    sh 'docker-compose --version || echo "Docker Compose not available"'
-                    
-                    // Check available disk space
-                    sh 'df -h'
-                    
-                    echo "✅ Environment validation completed"
-                }
-            }
-        }
         
         stage('Build and Test') {
             steps {
@@ -82,7 +61,6 @@ pipeline {
                         // Set the project name to avoid conflicts
                         env.COMPOSE_PROJECT_NAME = "pokemon-api-tests-${env.BUILD_NUMBER}"
                         
-                        // Run the services (images already pulled)
                         sh """
                             docker-compose -p ${COMPOSE_PROJECT_NAME} up --abort-on-container-exit --exit-code-from api-tests
                         """
@@ -102,7 +80,6 @@ pipeline {
                 script {
                     echo "📊 Collecting test results..."
                     
-                    // Copy test results from container if they exist
                     sh """
                         docker-compose -p ${COMPOSE_PROJECT_NAME} exec -T api-tests cat /app/test-results.xml || echo "No test results file found"
                     """
@@ -116,9 +93,8 @@ pipeline {
     post {
         always {
             script {
-                echo " Cleaning up Docker resources..."
+                echo "🧹 Cleaning up Docker resources..."
                 
-                // Always clean up containers and networks
                 sh """
                     docker-compose -p ${COMPOSE_PROJECT_NAME} down --volumes --remove-orphans || true
                     docker system prune -f || true
@@ -130,15 +106,14 @@ pipeline {
         
         success {
             script {
-                echo " Pipeline completed successfully!"
+                echo "✅ Pipeline completed successfully!"
             }
         }
         
         failure {
             script {
-                echo " Pipeline failed!"
+                echo "❌ Pipeline failed!"
                 
-                // Capture logs for debugging
                 sh """
                     echo "=== Docker Compose Logs ==="
                     docker-compose -p ${COMPOSE_PROJECT_NAME} logs || true
@@ -151,9 +126,8 @@ pipeline {
         
         cleanup {
             script {
-                echo " Final cleanup..."
+                echo "🧹 Final cleanup..."
                 
-                // Ensure all containers are stopped
                 sh """
                     docker-compose -p ${COMPOSE_PROJECT_NAME} down --volumes --remove-orphans || true
                     docker container prune -f || true

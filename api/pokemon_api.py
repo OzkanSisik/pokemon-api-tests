@@ -13,5 +13,3 @@ class PokemonAPI(BaseAPI):
     def get_pokemon_by_id(self, pokemon_id):
         endpoint = f"/pokemons/{pokemon_id}"
         return self.get(endpoint)
-
-    # İstersen başka endpoint'ler de ekleyebilirsin
