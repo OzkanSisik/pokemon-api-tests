@@ -46,8 +46,11 @@ pipeline {
             steps {
                 script {
                     echo "📦 Pulling latest images from Docker Hub..."
-                    sh 'docker pull ozkansisik/mock-pokemon-api:latest'
-                    sh 'docker pull ozkansisik/pokemon-api-tests:latest'
+                    
+                    // Pull all images defined in docker-compose.yml
+                    sh "docker-compose pull"
+                    
+                    echo "✅ Images pulled successfully"
                 }
             }
         }

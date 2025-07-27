@@ -1,15 +1,15 @@
 version: "3.9"
 
 services:
-  # Mock service
+  # Mock service - stable image from Docker Hub
   mock-service:
     image: ozkansisik/mock-pokemon-api:latest
     networks:
       - test-network
 
-  # API tests
+  # API tests - built with build number
   api-tests:
-    image: ozkansisik/pokemon-api-tests:latest
+    image: ozkansisik/pokemon-api-tests:${BUILD_NUMBER:-latest}
     depends_on:
       - mock-service
     environment:
@@ -20,7 +20,7 @@ services:
       - test-network
 
 
-# Custom network for service communication
+# Define a custom network for service communication
 networks:
   test-network:
     driver: bridge
