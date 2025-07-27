@@ -9,7 +9,7 @@ services:
 
   # API tests - built with build number
   api-tests:
-    image: ozkansisik/pokemon-api-tests:${BUILD_NUMBER:-latest}
+    image: ozkansisik/pokemon-api-tests:latest
     depends_on:
       - mock-service
     environment:
