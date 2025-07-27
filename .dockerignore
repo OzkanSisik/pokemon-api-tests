@@ -1,0 +1,16 @@
+.git/
+.gitignore
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+.pytest_cache/
+.idea/
+.DS_Store
+.AppleDouble
+.LSOverride
+Jenkinsfile
+README.md 
