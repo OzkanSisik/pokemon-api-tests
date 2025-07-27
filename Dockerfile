@@ -14,7 +14,6 @@ COPY . .
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
-# Create a script to wait for mock service and run tests
 RUN echo '#!/bin/bash\n\
 echo "Waiting for mock service to be ready..."\n\
 timeout 60 bash -c "until curl -f http://mock-service:3001/api/pokemon/pikachu; do sleep 2; done" || exit 1\n\
@@ -22,5 +21,4 @@ echo "Mock service is ready! Running tests..."\n\
 pytest tests/ -v\n\
 ' > /app/run-tests.sh && chmod +x /app/run-tests.sh
 
-# Default command
 CMD ["/app/run-tests.sh"]
