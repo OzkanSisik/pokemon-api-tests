@@ -64,7 +64,7 @@ pipeline {
                         env.COMPOSE_PROJECT_NAME = "pokemon-api-tests-${env.BUILD_NUMBER}"
                         
                         sh """
-                            docker-compose -p ${COMPOSE_PROJECT_NAME} up --abort-on-container-exit --exit-code-from api-tests
+                            timeout 1m docker-compose -p ${COMPOSE_PROJECT_NAME} up --abort-on-container-exit --exit-code-from api-tests
                         """
                         
                         echo "✅ Tests completed successfully"
