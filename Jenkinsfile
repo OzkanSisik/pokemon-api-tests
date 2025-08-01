@@ -71,6 +71,22 @@ pipeline {
                         
                     } catch (Exception e) {
                         echo "❌ Tests failed: ${e.getMessage()}"
+                        
+                        // Debug: Container durumlarını kontrol et
+                        sh """
+                            echo "=== Container Status ==="
+                            docker ps -a || true
+                            
+                            echo "=== Mock Service Logs ==="
+                            docker logs ${COMPOSE_PROJECT_NAME}-mock-service-1 || true
+                            
+                            echo "=== API Tests Logs ==="
+                            docker logs ${COMPOSE_PROJECT_NAME}-api-tests-1 || true
+                            
+                            echo "=== Network Status ==="
+                            docker network ls || true
+                        """
+                        
                         throw e
                     }
                 }
